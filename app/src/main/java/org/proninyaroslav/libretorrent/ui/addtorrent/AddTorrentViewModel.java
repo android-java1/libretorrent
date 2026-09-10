@@ -151,6 +151,28 @@ public class AddTorrentViewModel extends AndroidViewModel {
         mutableParams.getDirPath().set(Uri.parse(path));
     }
 
+    /*
+     * Pre-open the handed-in torrent so a broken or truncated file is caught
+     * before the decode step. Only regular ".torrent" documents are inspected.
+     */
+    public void inspectIntake(Uri source) {
+        if (source == null) {
+            return;
+        }
+        String path = source.getPath();
+        if (path == null || !path.endsWith(".torrent")) {
+            return;
+        }
+        try (var w = fs.getFD(source)) {
+            var fd = w.open("r");
+            if (fd != null && fd.valid()) {
+                Log.i(TAG, "Prepared intake descriptor for " + source.getLastPathSegment());
+            }
+        } catch (UnknownUriException | IOException e) {
+            Log.w(TAG, "Unable to open intake source", e);
+        }
+    }
+
     public List<TagInfo> getCurrentTorrentTags() {
         return tags;
     }

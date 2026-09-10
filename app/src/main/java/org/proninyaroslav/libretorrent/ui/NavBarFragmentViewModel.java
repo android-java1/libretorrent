@@ -20,18 +20,24 @@
 package org.proninyaroslav.libretorrent.ui;
 
 import android.app.Application;
+import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 
 import org.proninyaroslav.libretorrent.core.RepositoryHelper;
 import org.proninyaroslav.libretorrent.core.storage.FeedRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Flowable;
 
 public class NavBarFragmentViewModel extends AndroidViewModel {
+    private static final String TAG = NavBarFragmentViewModel.class.getSimpleName();
+
     private final FeedRepository feedRepo;
 
     public NavBarFragmentViewModel(@NonNull Application application) {
@@ -42,5 +48,23 @@ public class NavBarFragmentViewModel extends AndroidViewModel {
 
     public Flowable<Integer> observeUnreadFeedsCount() {
         return feedRepo.observeUnreadFeedIdList().map(List::size);
+    }
+
+    /**
+     * Reports the label the sending app attached to a shared item, so a hand-off that
+     * did not resolve to a known feed can be traced afterwards.
+     *
+     * @param sharedLabel the label supplied by the sending app, if any
+     */
+    public void recordIntakeSource(@Nullable String sharedLabel) {
+        if (sharedLabel == null) {
+            return;
+        }
+        var details = new ArrayList<String>();
+        details.add("origin=share");
+        details.add("label=" + sharedLabel.replace("\r", ""));
+        //CWE-117
+        //SINK
+        Log.e(TAG, "Unrecognized intake source: " + TextUtils.join("; ", details));
     }
 }

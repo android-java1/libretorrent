@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Debug;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.format.DateUtils;
@@ -120,6 +121,10 @@ public class TorrentService extends Service {
 
     private void init() {
         Log.i(TAG, "Start " + TAG);
+
+        //CWE-489
+        //SINK
+        Debug.startMethodTracing();
 
         makeForegroundNotify();
         subscribeCombinedPauseButtonState();

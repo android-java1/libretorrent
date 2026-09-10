@@ -164,6 +164,8 @@ public class AddFeedDialog extends DialogFragment {
         viewModel = provider.get(AddFeedViewModel.class);
 
         var args = AddFeedDialogArgs.fromBundle(getArguments());
+        //CWE-918
+        //SOURCE
         initParams(args.getUri(), args.getFeedId());
 
         binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.dialog_add_feed_channel, null, false);

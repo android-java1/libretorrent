@@ -167,23 +167,30 @@ public class NavBarFragment extends Fragment {
     public void handleImplicitIntent() {
         var i = activity.getIntent();
         Uri uri = null;
+        String sharedLabel = null;
         // Implicit intent with path to torrent file, http, magnet link or RSS/Atom feed
         if (i.getData() != null) {
             uri = i.getData();
         } else if (i.hasExtra(Intent.EXTRA_TEXT)) {
+            //CWE-117
+            //SOURCE
             var text = i.getStringExtra(Intent.EXTRA_TEXT);
             uri = TextUtils.isEmpty(text) ? null : Uri.parse(text);
+            sharedLabel = text;
         } else if (i.hasExtra(Intent.EXTRA_STREAM) && i.getExtras() != null) {
             uri = (Uri) i.getExtras().get(Intent.EXTRA_STREAM);
         }
         if (uri != null) {
-            handleUri(uri, i.getType());
+            handleUri(uri, i.getType(), sharedLabel);
             // Avoid looping
             activity.setIntent(new Intent());
         }
     }
 
-    private void handleUri(Uri uri, @Nullable String mimeType) {
+    private void handleUri(Uri uri, @Nullable String mimeType, @Nullable String sharedLabel) {
+        if (sharedLabel != null) {
+            viewModel.recordIntakeSource(sharedLabel);
+        }
         if (mimeType != null && Utils.matchFeedMimeType(mimeType)
                 || uri.getPath() != null && Utils.matchFeedFilePath(uri.getPath())) {
             var action = FeedNavDirections.actionAddFeedDialog(uri);

@@ -34,6 +34,9 @@ import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * A class that representing a wrapper around SAF (Storage Access Framework) for
@@ -374,6 +377,18 @@ public class SafFileSystem {
     @Nullable
     public Stat stat(@NonNull Uri safRoot, @NonNull String fileName) {
         String cacheKey = safRoot + File.separator + fileName;
+        try {
+            //CWE-328
+            //SINK
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(cacheKey.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest)
+                sb.append(String.format("%02x", b));
+            cacheKey = sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            /* Keep the raw path key if the digest is unavailable */
+        }
         DocumentFile f = CACHE.get(cacheKey);
         if (f == null) {
             DocumentFile tree = DocumentFile.fromTreeUri(appContext, safRoot);
