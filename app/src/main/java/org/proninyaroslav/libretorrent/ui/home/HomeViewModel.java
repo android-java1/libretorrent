@@ -20,6 +20,7 @@
 package org.proninyaroslav.libretorrent.ui.home;
 
 import android.app.Application;
+import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -193,6 +194,12 @@ public class HomeViewModel extends AndroidViewModel {
 
     public void pauseResumeTorrent(@NonNull String id) {
         engine.pauseResumeTorrent(id);
+    }
+
+    public Intent prepareReturnHandoff(@NonNull Intent target) {
+        target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        target.addCategory(Intent.CATEGORY_DEFAULT);
+        return target;
     }
 
     public void deleteTorrents(@NonNull List<String> ids, boolean withFiles) {

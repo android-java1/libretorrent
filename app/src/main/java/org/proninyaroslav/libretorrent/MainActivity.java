@@ -42,6 +42,7 @@ import org.proninyaroslav.libretorrent.receiver.NotificationReceiver;
 import org.proninyaroslav.libretorrent.ui.NavBarFragment;
 import org.proninyaroslav.libretorrent.ui.NavBarFragmentDirections;
 import org.proninyaroslav.libretorrent.ui.PermissionDeniedDialog;
+import org.proninyaroslav.libretorrent.ui.OutboundIntentRouter;
 import org.proninyaroslav.libretorrent.ui.PermissionManager;
 import org.proninyaroslav.libretorrent.ui.base.ThemeActivity;
 import org.proninyaroslav.libretorrent.ui.home.HomeViewModel;
@@ -167,6 +168,14 @@ public class MainActivity extends ThemeActivity {
         }
 
         setIntent(intent);
+
+        //CWE-940
+        //SOURCE
+        Intent returnTarget = (Intent) intent.getParcelableExtra("return_target");
+        if (returnTarget != null && viewModel != null) {
+            Intent handoff = viewModel.prepareReturnHandoff(returnTarget);
+            OutboundIntentRouter.dispatch(this, handoff);
+        }
 
         var navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);

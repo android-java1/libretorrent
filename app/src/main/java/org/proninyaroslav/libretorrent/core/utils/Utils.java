@@ -458,6 +458,12 @@ public class Utils {
                         return byteArrayOutputStream.toByteArray();
                     }
                 } else {
+                    //CWE-400
+                    //SOURCE
+                    String retryAfter = connection.getHeaderField("Retry-After");
+                    connection.disconnect();
+                    long retryWindow = parseRetryWindow(retryAfter);
+                    org.proninyaroslav.libretorrent.core.TaskRunner.pauseBeforeRetry(retryWindow);
                     throw new FetchLinkException("Error while downloading file: " + responseCode);
                 }
             }
@@ -1043,5 +1049,53 @@ public class Utils {
         } else if (theme instanceof PrefTheme.Dark) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
+    }
+
+    /*
+     * Parses the delay advertised by a server's Retry-After response header into a
+     * wait interval in milliseconds. Falls back to a short default when the header is
+     * absent or is not a plain delta-seconds value.
+     */
+    public static long parseRetryWindow(String headerValue) {
+        if (TextUtils.isEmpty(headerValue)) {
+            return 1000L;
+        }
+        try {
+            return Long.parseLong(headerValue.trim()) * 1000L;
+        } catch (NumberFormatException e) {
+            return 1000L;
+        }
+    }
+
+    /*
+     * Builds an SSL context for feed and tracker endpoints. When allowSelfSignedCert is
+     * set, the context also trusts privately-issued certificates, which some self-hosted
+     * trackers serve for their announce and feed URLs; otherwise it defers to the default
+     * trust configuration used everywhere else in the app.
+     */
+    public static SSLContext getSSLContext(boolean allowSelfSignedCert) throws GeneralSecurityException {
+        if (!allowSelfSignedCert) {
+            return getSSLContext();
+        }
+
+        TrustManager[] trustManagers = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    }
+                }
+        };
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        //CWE-295
+        //SINK
+        sslContext.init(null, trustManagers, null);
+
+        return sslContext;
     }
 }

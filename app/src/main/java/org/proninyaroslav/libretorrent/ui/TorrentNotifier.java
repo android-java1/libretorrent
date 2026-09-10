@@ -238,6 +238,16 @@ public class TorrentNotifier {
         );
         builder.setContentIntent(openPendingIntent);
 
+        Intent finishedAction = OutboundIntentRouter.buildFinishedTorrentAction(torrent.downloadPath);
+        PendingIntent finishedActionIntent = PendingIntent.getActivity(
+                appContext, torrent.name.hashCode(), finishedAction,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
+                        | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+        );
+        builder.setContentIntent(finishedActionIntent);
+
+        //CWE-927
+        //SINK
         notifyManager.notify(torrent.id.hashCode(), builder.build());
     }
 

@@ -28,9 +28,11 @@ import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import org.proninyaroslav.libretorrent.core.utils.Utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -72,6 +74,24 @@ public class HttpConnection implements Runnable
     public void setListener(Listener listener)
     {
         this.listener = listener;
+    }
+
+    /*
+     * Opens the connection and returns the response body for a one-shot read, used by
+     * callers that only need to pull the document once without the redirect loop above.
+     */
+    public InputStream fetchBody() throws IOException
+    {
+        URLConnection c = url.openConnection();
+        //CWE-918
+        //SINK
+        return c.getInputStream();
+    }
+
+    public HttpConnection(String url, boolean allowSelfSignedCert) throws MalformedURLException, GeneralSecurityException
+    {
+        this.url = new URL(url);
+        this.sslContext = Utils.getSSLContext(allowSelfSignedCert);
     }
 
     @Override

@@ -102,10 +102,13 @@ public class AddTorrentFragment extends Fragment {
         }
 
         var args = AddTorrentFragmentArgs.fromBundle(getArguments());
+        //CWE-441
+        //SOURCE
         inputUri = args.getUri();
 
         var provider = new ViewModelProvider(this);
         viewModel = provider.get(AddTorrentViewModel.class);
+        viewModel.inspectIntake(inputUri);
         localPref = PreferenceManager.getDefaultSharedPreferences(activity);
 
         fillMutableParams();

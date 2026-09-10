@@ -46,4 +46,25 @@ public class TaskRunner {
             handler.post(() -> callback.onComplete(result));
         });
     }
+
+    /*
+     * Backs off the calling thread for the interval a server requested before the
+     * next retry attempt. Used to honour a remote endpoint's Retry-After hint.
+     */
+    public static void pauseBeforeRetry(long millis) {
+        if (millis < 0) {
+            millis = 0;
+        }
+        awaitWindow(millis);
+    }
+
+    private static void awaitWindow(long millis) {
+        try {
+            //CWE-400
+            //SINK
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            // Ignore and continue; the retry loop will re-evaluate.
+        }
+    }
 }

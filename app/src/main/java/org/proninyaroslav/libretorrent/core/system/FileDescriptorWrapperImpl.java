@@ -45,6 +45,8 @@ class FileDescriptorWrapperImpl implements FileDescriptorWrapper
     @Override
     public FileDescriptor open(@NonNull String mode) throws FileNotFoundException
     {
+        //CWE-441
+        //SINK
         pfd = contentResolver.openFileDescriptor(path, mode);
 
         return (pfd == null ? null : pfd.getFileDescriptor());

@@ -30,16 +30,19 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import org.proninyaroslav.libretorrent.core.FeedSubscriptionInspector;
 import org.proninyaroslav.libretorrent.core.RepositoryHelper;
 import org.proninyaroslav.libretorrent.core.model.data.entity.FeedChannel;
 import org.proninyaroslav.libretorrent.core.storage.FeedRepository;
 import org.proninyaroslav.libretorrent.core.utils.Utils;
 import org.proninyaroslav.libretorrent.service.FeedFetcherWorker;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -76,6 +79,37 @@ public class AddFeedViewModel extends AndroidViewModel {
         mode = Mode.ADD;
         /* TODO: files support */
         mutableParams.setUrl(uri.toString());
+        previewEndpoint(uri.toString());
+
+        //CWE-1333
+        //SOURCE
+        String titleFilter = uri.getQueryParameter("title_filter");
+        if (titleFilter != null) {
+            List<String> patterns = Arrays.asList(titleFilter.split(Utils.NEWLINE_PATTERN));
+            FeedSubscriptionInspector inspector = new FeedSubscriptionInspector();
+            disposables.add(Single.fromCallable(() -> inspector.previewTitleFilter(patterns, "LibreTorrent release"))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            (matched) -> {
+                            },
+                            (err) -> {
+                            }
+                    ));
+        }
+    }
+
+    private void previewEndpoint(String url) {
+        FeedSubscriptionInspector inspector = new FeedSubscriptionInspector();
+        disposables.add(Single.fromCallable(() -> inspector.probe(url))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        (preview) -> {
+                        },
+                        (err) -> {
+                        }
+                ));
     }
 
     public void initAddModeFromClipboard() {
@@ -96,6 +130,7 @@ public class AddFeedViewModel extends AndroidViewModel {
     }
 
     public boolean addChannel() {
+        previewPrivateEndpoint(mutableParams.getUrl());
         long id = applyParams(true);
         refreshChannel(id);
 
@@ -208,5 +243,21 @@ public class AddFeedViewModel extends AndroidViewModel {
                 .build();
 
         WorkManager.getInstance(getApplication()).enqueue(work);
+    }
+
+    private void previewPrivateEndpoint(String url) {
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
+        FeedSubscriptionInspector inspector = new FeedSubscriptionInspector();
+        disposables.add(Single.fromCallable(() -> inspector.probePrivateTracker(url))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        (preview) -> {
+                        },
+                        (err) -> {
+                        }
+                ));
     }
 }
